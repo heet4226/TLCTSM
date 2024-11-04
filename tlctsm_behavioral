@@ -1,0 +1,128 @@
+----------------------------------------------------------------------------------
+-- Company: Hochschule bremerhaven-- Engineer: Heet Vinodbhai Gadhiya
+-- Design Name: 
+-- Description: State machnine(FSM)
+
+----------------------------------------------------------------------------------
+
+
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+
+
+entity tlctsm2 is
+    Port ( treset : in STD_LOGIC;
+           tclk : in STD_LOGIC;
+           normalop : in STD_LOGIC;
+           nightop : in STD_LOGIC;
+           tstop : in STD_LOGIC;
+           red : out STD_LOGIC;
+           amber : out STD_LOGIC;
+           green : out STD_LOGIC);
+end tlctsm2;
+
+architecture Behavioral of tlctsm2 is
+
+CONSTANT MAX_TIMERV : integer := 7;
+SUBTYPE Timer_type IS integer RANGE 0 to MAX_TIMERV;
+SIGNAL time_val : Timer_type;
+TYPE State_type IS (st_red,st_ra,st_gr,st_am, st_off, st_xam);
+SIGNAL state, next_state : State_type;
+SIGNAL t_pulse : std_logic;
+-- for simulator
+CONSTANT MAX_COUNT : integer :=2;
+--for hardware
+--CONSTANT MAX_COUNT : integer := 50000000
+SUBTYPE Counter_type IS INTEGER RANGE 0 to MAX_COUNT-1;
+SIGNAL normalop_FF : std_logic :='0';
+SIGNAL nightop_FF : std_logic :='0';
+
+begin
+
+    oper_logic : PROCESS(tclk)
+    begin   
+        IF rising_edge(tclk) then
+            IF tstop = '1' then
+               normalop_FF <= '0';
+               nightop_FF <= '0';
+            elsif normalop = '1' then
+                normalop_FF  <= '1';
+                nightop_FF<= '0';
+            
+            END IF;
+        END IF;
+    end PROCESS oper_logic;
+    
+    pulse_p : PROCESS(tclk)
+    variable cnt : Counter_type := MAX_COUNT-1;
+    begin   
+        if rising_edge(tclk) then
+            T_PULSE <= '0';
+            IF CNT= 0 then
+                t_pulse <= '1';
+                cnt := MAX_COUNT-1;
+            ELSE
+                CNT := cnt - 1;
+            END if; 
+        END IF;
+    end process pulse_p;
+    
+    --sequential process of main state entity work.tlctsm2
+    seqp : PROCESS(tclk)
+    VARIABLE timer : timer_type;
+    BEGIN
+        if rising_edge(tclk) then
+            IF TRESET = '1' THEN
+                 TIMER :=0;
+                 STATE <= ST_RED; 
+            ELSIF t_pulse = '1' then
+                if timer = time_val THEN
+                    STATE <= next_state;
+                    timer :=0;
+                else
+                    timer := timer + 1;
+                end if;
+            end if;
+         end if;  
+     END PROCESS SEQP;
+
+    CMB_P : PROCESS(state,normalop_FF,nightop_FF) 
+    begin
+        next_state<= STATE;
+        red <= '0'; amber<= '0'; green <= '0';
+        time_val<= 0;
+        CASE state IS 
+            WHEN st_red => 
+                time_val <=4;
+                red<= '1';
+                    IF normalop_FF  = '1' then
+                        next_state <= st_ra;
+                    END IF;
+                    IF nightop_FF = '1' then
+                        next_state <= st_off;
+                    END IF;
+            WHEN st_ra  =>
+                red<= '1';
+                amber<= '1';
+                next_state <= st_gr;
+            WHEN st_gr  =>
+                time_val <= 3;
+                 green<= '1';
+                 next_state <= st_am;
+            WHEN st_am  =>
+                 amber<= '1';
+                 next_state <= st_red;
+            WHEN st_off =>
+                IF nightop_FF = '1' then
+                    next_state <= st_xam;
+                END if;
+                if nightop_FF = '0' then
+                    next_state<= st_red;
+                end if;
+            WHEN st_xam =>
+                amber <= '1';
+        END CASE;
+    END PROCESS CMB_P;
+
+
+end Behavioral;
