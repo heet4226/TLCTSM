@@ -1,0 +1,83 @@
+----------------------------------------------------------------------------------
+-- Engineer: Heet Vinodbhai Gadhiya
+-- Module Name: tlctsm2_tb  
+-- Description:  test bench file
+
+----------------------------------------------------------------------------------
+
+
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+
+
+entity tlctsm2_tb is
+end tlctsm2_tb;
+
+architecture Behavioral of tlctsm2_tb is
+COMPONENT  tlctsm2 is
+    Port ( treset : in STD_LOGIC;
+           tclk : in STD_LOGIC;
+           normalop : in STD_LOGIC;
+           nightop : in STD_LOGIC;
+           tstop : in STD_LOGIC;
+           red : out STD_LOGIC;
+           amber : out STD_LOGIC;
+           green : out STD_LOGIC);
+end COMPONENT tlctsm2;
+
+signal  treset :  STD_LOGIC  :='0';
+signal  tclk :  STD_LOGIC     :='0';
+signal  normalop :  STD_LOGIC :='0';
+signal  nightop :  STD_LOGIc  :='0';
+signal  tstop :  STD_LOGIC    :='0';
+signal  red :  STD_LOGIC      :='0';
+signal  amber :  STD_LOGIC    :='0';
+signal  green :  STD_LOGIC    :='0';
+
+CONSTANT clk_period : time := 10 ns;
+
+begin
+
+    uut : component tlctsm2
+    PORT MAP (  treset =>   treset ,
+                tclk   =>  tclk ,
+                normalop =>  normalop,
+                nightop =>  nightop ,
+                tstop =>  tstop ,
+                red    =>  red  ,
+                amber  =>  amber ,
+                green  =>  green );
+                                           
+      clk_p : process
+      BEGIN 
+        WAIT for clk_period / 2;
+        tclk <= '1';          
+        WAIT for clk_period / 2;
+        tclk <= '0'; 
+      end process clk_p;
+      
+      
+      stim_p : process
+      BEGIN 
+        WAIT for clk_period * 3;
+        treseT <= '1';
+        WAIT for clk_period * 3;
+        treseT <= '0';
+        WAIT for clk_period * 3;
+         normalop<= '1';
+        WAIT for clk_period * 3;
+        normalop <= '0';
+        WAIT for clk_period * 35;
+        nightop <= '1';
+        WAIT for clk_period * 3;
+        nightop  <= '0';
+        WAIT for clk_period * 15;
+        tstop  <= '1';
+        WAIT for clk_period * 3;
+        tstop  <= '0';
+        WAIT;
+        
+     end process stim_p;
+        
+           
+end Behavioral;
